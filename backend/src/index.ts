@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { pool } from "./db";
 import { analyzeTicket } from "./analyzeTicket";
+import { ticketGraph } from "./graph/ticketGraph";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,37 +15,14 @@ app.post("/api/tickets", async (req, res) => {
   try {
     const tickets = req.body;
 
-    if (!Array.isArray(tickets)) {
-      return res.status(400).json({ error: "Request body must be an array" });
-    }
-
-    const values: any[] = [];
-    const placeholders: string[] = [];
-
-    tickets.forEach((ticket, i) => {
-      const { priority, category } = analyzeTicket(ticket.description);
-
-      const baseIndex = i * 4;
-      placeholders.push(
-        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${
-          baseIndex + 4
-        })`
-      );
-
-      values.push(ticket.title, ticket.description, priority, category);
+    const result = await ticketGraph.invoke({
+      tickets,
     });
 
-    const query = `
-      INSERT INTO tickets (title, description, priority, category)
-      VALUES ${placeholders.join(",")}
-      RETURNING *;
-    `;
-
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    res.json(result.analyzedTickets);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to insert tickets" });
+    res.status(500).json({ error: "Failed to process tickets" });
   }
 });
 

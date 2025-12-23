@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/JamieDawson/flowtel_first_test#readme",
   "dependencies": {
+    "@langchain/langgraph": "^1.0.7",
     "@types/express": "^5.0.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
