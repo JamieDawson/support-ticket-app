@@ -1,15 +1,24 @@
+# docker-compose.yml
 services:
-  db:
+  postgres:
     image: postgres:15
     container_name: support_postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: support_db
+    env_file:
+      - ./backend/.env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: support_backend
+    depends_on:
+      - postgres
+    env_file:
+      - ./backend/.env
+    ports:
+      - "3001:3001"
 
 volumes:
   postgres_data:

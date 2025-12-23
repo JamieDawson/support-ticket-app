@@ -1,0 +1,43 @@
+# Ignore node modules inside backend
+/backend/node_modules/
+
+# Ignore TypeScript build output
+/backend/dist/
+/backend/*.tsbuildinfo
+
+# Ignore environment files with secrets
+/backend/.env
+/backend/.env.local
+/backend/.env.*.local
+
+# Logs
+/backend/logs/
+**/*.log
+*.pid
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+**/postgres_data/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Optional npm cache
+/backend/.npm
+
+# Optional eslint/prettier cache
+/backend/.eslintcache
+/backend/.prettiercache
+
+# Temporary files
+/tmp/
