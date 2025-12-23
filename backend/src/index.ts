@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import { pool } from "./db";
+import { analyzeTicket } from "./analyzeTicket";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -10,31 +11,40 @@ app.use(express.json());
 
 // POST /api/tickets
 app.post("/api/tickets", async (req, res) => {
-  console.log("POST /api/tickets");
-  const tickets = req.body; // expecting [{ title, description }, ...]
-
-  if (!Array.isArray(tickets)) {
-    return res.status(400).json({ error: "Body must be an array of tickets" });
-  }
-
   try {
-    // Prepare a multi-row INSERT
+    const tickets = req.body;
+
+    if (!Array.isArray(tickets)) {
+      return res.status(400).json({ error: "Request body must be an array" });
+    }
+
     const values: any[] = [];
-    const placeholders = tickets
-      .map((ticket, i) => {
-        const idx = i * 2;
-        values.push(ticket.title, ticket.description);
-        return `($${idx + 1}, $${idx + 2})`;
-      })
-      .join(",");
+    const placeholders: string[] = [];
 
-    const query = `INSERT INTO tickets (title, description) VALUES ${placeholders} RETURNING *`;
+    tickets.forEach((ticket, i) => {
+      const { priority, category } = analyzeTicket(ticket.description);
+
+      const baseIndex = i * 4;
+      placeholders.push(
+        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${
+          baseIndex + 4
+        })`
+      );
+
+      values.push(ticket.title, ticket.description, priority, category);
+    });
+
+    const query = `
+      INSERT INTO tickets (title, description, priority, category)
+      VALUES ${placeholders.join(",")}
+      RETURNING *;
+    `;
+
     const result = await pool.query(query, values);
-
-    res.status(201).json(result.rows);
+    res.json(result.rows);
   } catch (err) {
-    console.error("Failed to insert tickets:", err);
-    res.status(500).json({ error: "DB insertion failed" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to insert tickets" });
   }
 });
 
