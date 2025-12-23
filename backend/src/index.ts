@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { pool } from "./db";
 import { analyzeTicket } from "./analyzeTicket";
+import { analysisGraph } from "./graph/analysisGraph";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -175,8 +176,9 @@ app.post("/api/analyze", async (req, res) => {
 
     const analysisResult = await pool.query(analysisQuery, analysisValues);
 
-    // Fetch ticket details for the analysis results
-    const analyzedTicketIds = analysisResult.rows.map((row) => row.ticket_id);
+    const analyzedTicketIds = analysisResult.rows.map(
+      (row: any) => row.ticket_id
+    );
     const ticketDetailsResult = await pool.query(
       `SELECT id, title, description FROM tickets WHERE id = ANY($1::int[])`,
       [analyzedTicketIds]
@@ -194,8 +196,14 @@ app.post("/api/analyze", async (req, res) => {
       };
     });
 
+    // Fetch updated analysis run
+    const updatedRunResult = await pool.query(
+      `SELECT * FROM analysis_runs WHERE id = $1`,
+      [analysisRun.id]
+    );
+
     res.json({
-      analysisRun,
+      analysisRun: updatedRunResult.rows[0],
       ticketAnalysis: ticketAnalysisWithDetails,
     });
   } catch (err) {
