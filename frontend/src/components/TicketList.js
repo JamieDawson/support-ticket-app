@@ -1,7 +1,15 @@
-import React from 'react';
-import './TicketList.css';
+import React from "react";
+import "./TicketList.css";
 
-function TicketList({ tickets, selectedTickets, onToggleSelection }) {
+function TicketList({ tickets, selectedTickets, onToggleSelection, loading }) {
+  if (loading) {
+    return (
+      <div className="empty-state">
+        <p>Loading tickets...</p>
+      </div>
+    );
+  }
+
   if (tickets.length === 0) {
     return (
       <div className="empty-state">
@@ -12,10 +20,12 @@ function TicketList({ tickets, selectedTickets, onToggleSelection }) {
 
   return (
     <div className="ticket-list">
-      {tickets.map(ticket => (
+      {tickets.map((ticket) => (
         <div
           key={ticket.id}
-          className={`ticket-item ${selectedTickets.includes(ticket.id) ? 'selected' : ''}`}
+          className={`ticket-item ${
+            selectedTickets.includes(ticket.id) ? "selected" : ""
+          }`}
           onClick={() => onToggleSelection(ticket.id)}
         >
           <div className="ticket-checkbox">
@@ -45,6 +55,11 @@ function TicketList({ tickets, selectedTickets, onToggleSelection }) {
             </p>
             <div className="ticket-meta">
               <span className="ticket-id">ID: {ticket.id}</span>
+              {ticket.created_at && (
+                <span className="ticket-date">
+                  Created: {new Date(ticket.created_at).toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -54,4 +69,3 @@ function TicketList({ tickets, selectedTickets, onToggleSelection }) {
 }
 
 export default TicketList;
-

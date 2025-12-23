@@ -100,10 +100,15 @@
   gap: 15px;
   font-size: 0.9rem;
   color: #999;
+  flex-wrap: wrap;
 }
 
 .ticket-id {
   font-weight: 500;
+}
+
+.ticket-date {
+  font-style: italic;
 }
 
 .empty-state {
