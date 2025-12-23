@@ -2,6 +2,10 @@
 
 A simple app to analyze support tickets - categorize them and assign priorities. Built with React, Node.js, PostgreSQL, and Docker.
 
+![Support Ticket App Screenshot 1](images/support-ticket-image-1.png)
+
+![Support Ticket App Screenshot 2](images/support-ticket-image-2.png)
+
 ## Quick Start
 
 ### What You Need
@@ -99,5 +103,5 @@ Here are some ticket examples to test different combinations:
 Press `Ctrl+C` in the terminal, then run:
 
 ```bash
-docker compose down
+docker compose down -v
 ```
