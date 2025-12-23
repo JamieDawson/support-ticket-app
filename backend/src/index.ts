@@ -6,8 +6,33 @@ import { analyzeTicket } from "./analyzeTicket";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 // Middleware to parse JSON
 app.use(express.json());
+
+// GET /api/tickets
+app.get("/api/tickets", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM tickets ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch tickets" });
+  }
+});
 
 // POST /api/tickets
 app.post("/api/tickets", async (req, res) => {

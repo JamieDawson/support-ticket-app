@@ -1,0 +1,119 @@
+.analysis-results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-summary {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.analysis-summary h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.analysis-summary p {
+  margin: 5px 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.analysis-date {
+  font-size: 0.9rem;
+  color: #999;
+  margin-top: 10px;
+}
+
+.ticket-analysis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ticket-analysis-list h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.analysis-item {
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+}
+
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.analysis-header h4 {
+  margin: 0;
+  color: #333;
+  flex: 1;
+}
+
+.analysis-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priority-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.priority-high {
+  background-color: #dc3545;
+  color: white;
+}
+
+.priority-medium {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.priority-low {
+  background-color: #28a745;
+  color: white;
+}
+
+.category-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  background-color: #6c757d;
+  color: white;
+}
+
+.analysis-description {
+  color: #666;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+
+.analysis-notes {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.analysis-notes strong {
+  color: #333;
+}
+
