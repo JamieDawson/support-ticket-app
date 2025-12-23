@@ -95,28 +95,54 @@ app.post("/api/analyze", async (req, res) => {
       return res.status(400).json({ error: "No tickets found" });
     }
 
-    // 2. Create analysis run
-    const runResult = await pool.query(
-      `INSERT INTO analysis_runs (created_at, summary) VALUES (NOW(), $1) RETURNING *`,
-      [`Analyzed ${tickets.length} ticket(s)`]
-    );
-    const analysisRun = runResult.rows[0];
-
-    // 3. Analyze each ticket, update tickets table, and insert into ticket_analysis
-    const analysisValues: any[] = [];
-    const placeholders: string[] = [];
-
+    // 2. Analyze each ticket first to calculate statistics
     const ticketUpdates: Array<{
       id: number;
       priority: string;
       category: string;
     }> = [];
 
-    tickets.forEach((ticket, i) => {
+    tickets.forEach((ticket) => {
       const { priority, category } = analyzeTicket(ticket.description);
-
-      // Store for updating tickets table
       ticketUpdates.push({ id: ticket.id, priority, category });
+    });
+
+    // Calculate statistics
+    const priorityCounts: { [key: string]: number } = {};
+    const categoryCounts: { [key: string]: number } = {};
+
+    ticketUpdates.forEach((update) => {
+      priorityCounts[update.priority] =
+        (priorityCounts[update.priority] || 0) + 1;
+      categoryCounts[update.category] =
+        (categoryCounts[update.category] || 0) + 1;
+    });
+
+    // Build detailed summary
+    const prioritySummary = Object.entries(priorityCounts)
+      .map(([priority, count]) => `${count} ${priority}`)
+      .join(", ");
+
+    const categorySummary = Object.entries(categoryCounts)
+      .map(([category, count]) => `${count} ${category}`)
+      .join(", ");
+
+    const summary = `Analyzed ${tickets.length} ticket(s). Priorities: ${prioritySummary}. Categories: ${categorySummary}.`;
+
+    // 3. Create analysis run with detailed summary
+    const runResult = await pool.query(
+      `INSERT INTO analysis_runs (created_at, summary) VALUES (NOW(), $1) RETURNING *`,
+      [summary]
+    );
+    const analysisRun = runResult.rows[0];
+
+    // 4. Prepare ticket_analysis inserts
+    const analysisValues: any[] = [];
+    const placeholders: string[] = [];
+
+    ticketUpdates.forEach((update, i) => {
+      const ticket = tickets.find((t) => t.id === update.id);
+      if (!ticket) return;
 
       placeholders.push(
         `($${i * 5 + 1}, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${
@@ -126,13 +152,13 @@ app.post("/api/analyze", async (req, res) => {
       analysisValues.push(
         analysisRun.id,
         ticket.id,
-        category,
-        priority,
+        update.category,
+        update.priority,
         null // notes optional, keep null for now
       );
     });
 
-    // Update tickets table with priority and category
+    // 5. Update tickets table with priority and category
     for (const update of ticketUpdates) {
       await pool.query(
         `UPDATE tickets SET priority = $1, category = $2 WHERE id = $3`,
@@ -149,9 +175,28 @@ app.post("/api/analyze", async (req, res) => {
 
     const analysisResult = await pool.query(analysisQuery, analysisValues);
 
+    // Fetch ticket details for the analysis results
+    const analyzedTicketIds = analysisResult.rows.map((row) => row.ticket_id);
+    const ticketDetailsResult = await pool.query(
+      `SELECT id, title, description FROM tickets WHERE id = ANY($1::int[])`,
+      [analyzedTicketIds]
+    );
+
+    // Combine analysis with ticket details
+    const ticketAnalysisWithDetails = analysisResult.rows.map((analysis) => {
+      const ticket = ticketDetailsResult.rows.find(
+        (t) => t.id === analysis.ticket_id
+      );
+      return {
+        ...analysis,
+        title: ticket?.title || "",
+        description: ticket?.description || "",
+      };
+    });
+
     res.json({
       analysisRun,
-      ticketAnalysis: analysisResult.rows,
+      ticketAnalysis: ticketAnalysisWithDetails,
     });
   } catch (err) {
     console.error(err);
