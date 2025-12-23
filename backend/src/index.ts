@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import { pool } from "./db";
 import { analyzeTicket } from "./analyzeTicket";
-import { ticketGraph } from "./graph/ticketGraph";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,13 +12,31 @@ app.use(express.json());
 // POST /api/tickets
 app.post("/api/tickets", async (req, res) => {
   try {
-    const tickets = req.body;
+    const tickets = req.body; // array of { title: string; description: string }
 
-    const result = await ticketGraph.invoke({
-      tickets,
+    if (!Array.isArray(tickets)) {
+      return res
+        .status(400)
+        .json({ error: "Body must be an array of tickets" });
+    }
+
+    const values: any[] = [];
+    const placeholders: string[] = [];
+
+    tickets.forEach((ticket, i) => {
+      const base = i * 2;
+      placeholders.push(`($${base + 1}, $${base + 2}, NOW())`);
+      values.push(ticket.title, ticket.description);
     });
 
-    res.json(result.analyzedTickets);
+    const query = `
+    INSERT INTO tickets (title, description, created_at)
+    VALUES ${placeholders.join(",")}
+    RETURNING *;
+  `;
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to process tickets" });
@@ -35,11 +52,19 @@ app.post("/api/analyze", async (req, res) => {
     let ticketsQuery = "SELECT * FROM tickets";
     const params: any[] = [];
     if (ticketIds && ticketIds.length) {
-      ticketsQuery += ` WHERE id = ANY($1)`;
-      params.push(ticketIds);
+      // Convert to numbers to ensure type consistency
+      const numericIds = ticketIds.map((id: any) => Number(id));
+      const placeholders = numericIds
+        .map((_: any, i: number) => `$${i + 1}`)
+        .join(", ");
+      ticketsQuery += ` WHERE id IN (${placeholders})`;
+      params.push(...numericIds);
+      console.log("Query:", ticketsQuery);
+      console.log("Params:", params);
     }
     const ticketsResult = await pool.query(ticketsQuery, params);
     const tickets = ticketsResult.rows;
+    console.log("Found tickets:", tickets.length);
 
     if (tickets.length === 0) {
       return res.status(400).json({ error: "No tickets found" });
@@ -52,12 +77,22 @@ app.post("/api/analyze", async (req, res) => {
     );
     const analysisRun = runResult.rows[0];
 
-    // 3. Analyze each ticket & insert into ticket_analysis
+    // 3. Analyze each ticket, update tickets table, and insert into ticket_analysis
     const analysisValues: any[] = [];
     const placeholders: string[] = [];
 
+    const ticketUpdates: Array<{
+      id: number;
+      priority: string;
+      category: string;
+    }> = [];
+
     tickets.forEach((ticket, i) => {
       const { priority, category } = analyzeTicket(ticket.description);
+
+      // Store for updating tickets table
+      ticketUpdates.push({ id: ticket.id, priority, category });
+
       placeholders.push(
         `($${i * 5 + 1}, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${
           i * 5 + 5
@@ -71,6 +106,14 @@ app.post("/api/analyze", async (req, res) => {
         null // notes optional, keep null for now
       );
     });
+
+    // Update tickets table with priority and category
+    for (const update of ticketUpdates) {
+      await pool.query(
+        `UPDATE tickets SET priority = $1, category = $2 WHERE id = $3`,
+        [update.priority, update.category, update.id]
+      );
+    }
 
     const analysisQuery = `
       INSERT INTO ticket_analysis 
