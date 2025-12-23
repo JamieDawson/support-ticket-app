@@ -28,7 +28,13 @@ function App() {
       }
       const data = await response.json();
       console.log("Fetched tickets:", data);
-      setTickets(data);
+      // Sort by created_at descending (newest first)
+      const sortedTickets = data.sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      setTickets(sortedTickets);
     } catch (error) {
       console.error("Error fetching tickets:", error);
       setFetchError(error.message);
@@ -54,7 +60,13 @@ function App() {
       }
 
       const newTickets = await response.json();
-      setTickets([...tickets, ...newTickets]);
+      // Combine and sort by created_at descending (newest first)
+      const allTickets = [...tickets, ...newTickets].sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      setTickets(allTickets);
     } catch (error) {
       console.error("Error creating ticket:", error);
       alert("Failed to create ticket. Please try again.");
