@@ -30,7 +30,7 @@ type GraphState = {
 // Node 1: Analyze tickets
 async function analyzeTickets(state: GraphState): Promise<Partial<GraphState>> {
   const analyzedTickets = state.tickets.map((ticket) => {
-    const analysis = analyzeTicket(ticket.description);
+    const analysis = analyzeTicket(ticket.title, ticket.description);
 
     return {
       ...ticket,

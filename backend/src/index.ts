@@ -104,7 +104,7 @@ app.post("/api/analyze", async (req, res) => {
     }> = [];
 
     tickets.forEach((ticket) => {
-      const { priority, category } = analyzeTicket(ticket.description);
+      const { priority, category } = analyzeTicket(ticket.title, ticket.description);
       ticketUpdates.push({ id: ticket.id, priority, category });
     });
 

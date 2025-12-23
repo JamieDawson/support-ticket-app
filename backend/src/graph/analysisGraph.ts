@@ -41,7 +41,10 @@ async function analyzeTickets(state: GraphState): Promise<Partial<GraphState>> {
   if (!state.tickets) return {};
 
   const analyzedTickets = state.tickets.map((ticket) => {
-    const analysis = analyzeTicket(ticket.description);
+    const analysis = analyzeTicket(
+      ticket.title || "",
+      ticket.description || ""
+    );
     return {
       ...ticket,
       priority: analysis.priority,

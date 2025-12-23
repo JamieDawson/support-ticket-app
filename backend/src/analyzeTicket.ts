@@ -1,8 +1,9 @@
-export function analyzeTicket(description: string) {
-  const lower = description.toLowerCase();
+export function analyzeTicket(title: string, description: string) {
+  // Combine title and description for analysis
+  const combinedText = `${title} ${description}`.toLowerCase();
 
-  const priority = lower.includes("urgent") ? "high" : "low";
-  const category = lower.includes("billing") ? "billing" : "general";
+  const priority = combinedText.includes("urgent") ? "high" : "low";
+  const category = combinedText.includes("billing") ? "billing" : "general";
 
   return { priority, category };
 }
